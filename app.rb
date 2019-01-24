@@ -10,7 +10,6 @@ configure do
 end
 
 before do
-  response.headers["Allow"] = "GET, POST, OPTIONS"
   response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
   response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
   response.headers["Access-Control-Allow-Methods"] = "POST", "OPTIONS", "PUT", "DELETE", "GET"
@@ -37,15 +36,20 @@ get '/ratingQuestions' do
 end
 
 post '/ratingQuestions' do
-  # Instead of using the form params need to convert to json_params
   json_params = JSON.parse(request.body.read)
   question = {
     "title": json_params["title"],
-    "id": rating_questions.last["id"]+1
+    "id": rating_questions.any? ? rating_questions.last["id"]+1 : 1
   }
   updated_rating_questions = rating_questions << question
   write_json(updated_rating_questions)
   question.to_json
+end
+
+put '/ratingQuestions/:id' do
+  json_params = JSON.parse(request.body.read)
+  updated_rating_questions = rating_questions.each { |q| q["title"] = json_params["title"] if q["id"] == params["id"].to_i }
+  write_json(updated_rating_questions)
 end
 
 delete '/ratingQuestions/:id' do
@@ -53,4 +57,3 @@ delete '/ratingQuestions/:id' do
   updated_rating_questions = rating_questions.reject { |question| question["id"] == target_id}
   write_json(updated_rating_questions)
 end
-
